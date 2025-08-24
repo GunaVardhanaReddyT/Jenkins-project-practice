@@ -2,18 +2,34 @@ pipeline {
     agent any
 
     environment {
-        // Centralize Tomcat path for easier edits
+        // Tomcat location
         TOMCAT_HOME = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1'
-        FRONTEND_DIST = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\Frontend\\todo\\dist'
-        BACKEND_WAR = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\ToDoList\\demo\\target'
+
+        // Frontend & Backend paths
+        FRONTEND_DIR = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\Frontend\\todo'
+        BACKEND_DIR  = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\ToDoList\\demo'
+
+        // Tomcat deployment folders
+        FRONTEND_DEPLOY = 'todolist-frontend'
+        BACKEND_DEPLOY  = 'todolist-backend.war'
     }
 
     stages {
+
         // ===== FRONTEND BUILD ===== //
         stage('Build Frontend') {
             steps {
-                dir('E:\\Todo-List-Spring-Boot-Full-Stack-Project\\Frontend\\todo') {
-                    bat 'npm ci'
+                dir(FRONTEND_DIR) {
+                    echo "Updating Vite base path..."
+                    // Update vite.config.js to set correct base path
+                    bat '''
+                    powershell -Command "(gc vite.config.js) -replace 'base: .*,', 'base: \\'/${env:FRONTEND_DEPLOY}/\\',' | Out-File vite.config.js -Encoding UTF8"
+                    '''
+
+                    echo "Installing frontend dependencies..."
+                    bat 'if exist package-lock.json (npm ci) else (npm install)'
+
+                    echo "Building frontend..."
                     bat 'npm run build'
                 }
             }
@@ -24,11 +40,11 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\reactstudentapi" (
-                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\reactstudentapi"
+                if exist "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}" (
+                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
                 )
-                mkdir "${TOMCAT_HOME}\\webapps\\reactstudentapi"
-                xcopy /E /I /Y "${FRONTEND_DIST}\\*" "${TOMCAT_HOME}\\webapps\\reactstudentapi"
+                mkdir "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
+                xcopy /E /I /Y "${FRONTEND_DIR}\\dist\\*" "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
                 endlocal
                 """
             }
@@ -37,7 +53,7 @@ pipeline {
         // ===== BACKEND BUILD ===== //
         stage('Build Backend') {
             steps {
-                dir('E:\\Todo-List-Spring-Boot-Full-Stack-Project\\ToDoList\\demo') {
+                dir(BACKEND_DIR) {
                     bat 'mvn -B clean package'
                 }
             }
@@ -48,14 +64,11 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war" (
-                    del /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
+                if exist "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}" (
+                    del /Q "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}"
                 )
-                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi" (
-                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi"
-                )
-                for %%F in (${BACKEND_WAR}\\*.war) do (
-                    copy "%%F" "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
+                for %%F in (${BACKEND_DIR}\\*.war) do (
+                    copy "%%F" "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}"
                 )
                 endlocal
                 """
@@ -65,7 +78,7 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Deployment Successful! Access frontend at: http://localhost:8080/${FRONTEND_DEPLOY}/'
         }
         failure {
             echo 'Pipeline Failed.'
