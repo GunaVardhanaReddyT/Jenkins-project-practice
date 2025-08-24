@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Centralize Tomcat path for easier edits
         TOMCAT_HOME = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1'
-        FRONTEND_DIST = 'frontend\\dist'
+        FRONTEND_DIST = 'Frontend\\todo\\dist'
         BACKEND_WAR = 'ToDoList\\target'
         PROJECT_DIR = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project'
     }
@@ -13,8 +13,9 @@ pipeline {
         // ===== FRONTEND BUILD ===== //
         stage('Build Frontend') {
             steps {
-                dir("${PROJECT_DIR}\\frontend") {
-                    bat 'npm ci'
+                dir("${PROJECT_DIR}\\Frontend\\todo") {
+                    // Use npm install if no lockfile exists
+                    bat 'if exist package-lock.json (npm ci) else (npm install)'
                     bat 'npm run build'
                 }
             }
