@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // Centralize Tomcat path for easier edits
+        // Tomcat path
         TOMCAT_HOME = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1'
         FRONTEND_DIST = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\Frontend\\todo\\dist'
         BACKEND_WAR = 'E:\\Todo-List-Spring-Boot-Full-Stack-Project\\ToDoList\\demo\\target'
@@ -24,11 +24,11 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\reactstudentapi" (
-                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\reactstudentapi"
+                if exist "${TOMCAT_HOME}\\webapps\\todo-frontend" (
+                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\todo-frontend"
                 )
-                mkdir "${TOMCAT_HOME}\\webapps\\reactstudentapi"
-                xcopy /E /I /Y "${FRONTEND_DIST}\\*" "${TOMCAT_HOME}\\webapps\\reactstudentapi"
+                mkdir "${TOMCAT_HOME}\\webapps\\todo-frontend"
+                xcopy /E /I /Y "${FRONTEND_DIST}\\*" "${TOMCAT_HOME}\\webapps\\todo-frontend"
                 endlocal
                 """
             }
@@ -48,14 +48,14 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war" (
-                    del /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
+                if exist "${TOMCAT_HOME}\\webapps\\todo-backend.war" (
+                    del /Q "${TOMCAT_HOME}\\webapps\\todo-backend.war"
                 )
-                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi" (
-                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi"
+                if exist "${TOMCAT_HOME}\\webapps\\todo-backend" (
+                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\todo-backend"
                 )
                 for %%F in (${BACKEND_WAR}\\*.war) do (
-                    copy "%%F" "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
+                    copy "%%F" "${TOMCAT_HOME}\\webapps\\todo-backend.war"
                 )
                 endlocal
                 """
