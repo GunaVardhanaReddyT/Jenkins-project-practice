@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // Tomcat location
+        // Centralize Tomcat path for easier edits
         TOMCAT_HOME = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1'
 
         // Frontend & Backend paths
@@ -40,11 +40,11 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}" (
-                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
+                if exist "${TOMCAT_HOME}\\webapps\\reactstudentapi" (
+                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\reactstudentapi"
                 )
-                mkdir "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
-                xcopy /E /I /Y "${FRONTEND_DIR}\\dist\\*" "${TOMCAT_HOME}\\webapps\\${FRONTEND_DEPLOY}"
+                mkdir "${TOMCAT_HOME}\\webapps\\reactstudentapi"
+                xcopy /E /I /Y "${FRONTEND_DIST}\\*" "${TOMCAT_HOME}\\webapps\\reactstudentapi"
                 endlocal
                 """
             }
@@ -64,11 +64,14 @@ pipeline {
             steps {
                 bat """
                 setlocal
-                if exist "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}" (
-                    del /Q "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}"
+                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war" (
+                    del /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
                 )
-                for %%F in (${BACKEND_DIR}\\*.war) do (
-                    copy "%%F" "${TOMCAT_HOME}\\webapps\\${BACKEND_DEPLOY}"
+                if exist "${TOMCAT_HOME}\\webapps\\springbootstudentapi" (
+                    rmdir /S /Q "${TOMCAT_HOME}\\webapps\\springbootstudentapi"
+                )
+                for %%F in (${BACKEND_WAR}\\*.war) do (
+                    copy "%%F" "${TOMCAT_HOME}\\webapps\\springbootstudentapi.war"
                 )
                 endlocal
                 """
